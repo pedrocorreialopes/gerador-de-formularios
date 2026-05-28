@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FormDocs — Editor de PDF e Imagem</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+  <!-- PDF.js -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <!-- html2canvas -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ========== HEADER ========== -->
+  <header id="app-header">
+    <div class="header-brand">
+      <i class="fa-solid fa-file-pen brand-icon"></i>
+      <span class="brand-name">FormDocs</span>
+    </div>
+    <nav class="header-actions" id="header-actions" style="display:none;">
+      <button id="btn-add-text"      class="tool-btn" title="Campo de Texto"><i class="fa-solid fa-font"></i><span>Texto</span></button>
+      <button id="btn-add-textarea"  class="tool-btn" title="Área de Texto"><i class="fa-solid fa-align-left"></i><span>Área</span></button>
+      <button id="btn-add-checkbox"  class="tool-btn" title="Caixa de Seleção"><i class="fa-solid fa-square-check"></i><span>Checkbox</span></button>
+      <button id="btn-add-radio"     class="tool-btn" title="Botão de Opção"><i class="fa-solid fa-circle-dot"></i><span>Rádio</span></button>
+      <button id="btn-add-select"    class="tool-btn" title="Lista Suspensa"><i class="fa-solid fa-list"></i><span>Select</span></button>
+      <button id="btn-add-signature" class="tool-btn" title="Assinatura"><i class="fa-solid fa-signature"></i><span>Assinatura</span></button>
+      <div class="separator"></div>
+      <button id="btn-prev-page" class="tool-btn nav-btn" title="Página Anterior"><i class="fa-solid fa-chevron-left"></i></button>
+      <span id="page-indicator" class="page-indicator">1 / 1</span>
+      <button id="btn-next-page" class="tool-btn nav-btn" title="Próxima Página"><i class="fa-solid fa-chevron-right"></i></button>
+      <div class="separator"></div>
+      <button id="btn-preview"  class="tool-btn accent-btn"  title="Pré-visualizar"><i class="fa-solid fa-eye"></i><span>Preview</span></button>
+      <button id="btn-export"   class="tool-btn export-btn"  title="Exportar PDF"><i class="fa-solid fa-file-arrow-down"></i><span>Exportar</span></button>
+      <button id="btn-new"      class="tool-btn danger-btn"  title="Novo documento"><i class="fa-solid fa-plus"></i><span>Novo</span></button>
+    </nav>
+  </header>
+
+  <!-- ========== MAIN ========== -->
+  <main id="app-main">
+
+    <!-- UPLOAD ZONE -->
+    <section id="upload-zone" class="upload-zone">
+      <div class="upload-card">
+        <div class="upload-icon-wrap">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <h2>Carregue seu documento</h2>
+        <p>Arraste e solte um arquivo <strong>PDF</strong> ou <strong>Imagem</strong> aqui, ou clique para selecionar</p>
+        <label class="upload-label" for="file-input">
+          <i class="fa-solid fa-folder-open"></i> Escolher Arquivo
+        </label>
+        <input type="file" id="file-input" accept=".pdf,image/*" hidden />
+        <p class="upload-hint">Formatos suportados: PDF, PNG, JPG, JPEG, WEBP, GIF</p>
+      </div>
+      <div id="drop-overlay" class="drop-overlay"><i class="fa-solid fa-cloud-arrow-up"></i> Solte aqui!</div>
+    </section>
+
+    <!-- EDITOR AREA -->
+    <section id="editor-area" class="editor-area" style="display:none;">
+      <div id="canvas-scroll" class="canvas-scroll">
+        <div id="pages-container" class="pages-container"></div>
+      </div>
+
+      <!-- FLOATING PROPERTIES PANEL -->
+      <aside id="props-panel" class="props-panel" style="display:none;">
+        <div class="props-header">
+          <span id="props-title"><i class="fa-solid fa-sliders"></i> Propriedades</span>
+          <button id="btn-close-props"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="props-body" id="props-body"></div>
+        <div class="props-footer">
+          <button id="btn-delete-field" class="danger-btn"><i class="fa-solid fa-trash"></i> Excluir</button>
+        </div>
+      </aside>
+    </section>
+
+  </main>
+
+  <!-- ========== PREVIEW MODAL ========== -->
+  <div id="preview-modal" class="modal" style="display:none;">
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-eye"></i> Pré-visualização</h3>
+        <button id="btn-close-preview"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="preview-body"></div>
+    </div>
+  </div>
+
+  <!-- ========== SIGNATURE MODAL ========== -->
+  <div id="signature-modal" class="modal" style="display:none;">
+    <div class="modal-backdrop" id="sig-backdrop"></div>
+    <div class="modal-box sig-box">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-signature"></i> Assinatura</h3>
+        <button id="btn-close-sig"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <canvas id="sig-canvas" width="500" height="200"></canvas>
+        <div class="sig-controls">
+          <button id="btn-clear-sig" class="tool-btn"><i class="fa-solid fa-eraser"></i> Limpar</button>
+          <button id="btn-save-sig"  class="tool-btn export-btn"><i class="fa-solid fa-check"></i> Confirmar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TOAST ========== -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
